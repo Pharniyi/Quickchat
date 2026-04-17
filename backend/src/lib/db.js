@@ -1,0 +1,11 @@
+import mongoose from 'mongoose'; //to import the Mongoose library, which is an Object Data Modeling (ODM) tool for MongoDB and Node.js. It provides a straightforward way to model application data, enforce schemas, and interact with the MongoDB database using JavaScript.
+
+export const connectDB = async () => { //to define an asynchronous function named connectDB that will be responsible for establishing a connection to the MongoDB database. This function uses async/await syntax to handle the asynchronous nature of database connections, allowing for cleaner and more readable code when connecting to the database and handling potential errors.
+    try{
+       const conn=  await mongoose.connect(process.env.MONGODB_URI)//to connect to the MongoDB database using the connection string specified in the environment variable MONGODB_URI. The mongoose.connect() method returns a promise that resolves to the connection object if the connection is successful. By awaiting this promise, the function ensures that it waits for the connection to be established before proceeding, allowing for proper error handling and logging of the connection status.
+       console.log(`MongoDB connected: ${conn.connection.host}`)//to log a message to the console indicating that the MongoDB connection was successful, along with the host of the connected database. This provides feedback to the developer or system administrator that the application has successfully connected to the MongoDB database, which is crucial for debugging and monitoring the application's database connectivity status.
+    }
+    catch(error){
+        console.log("Error connecting to database", error)//to catch any errors that occur during the database connection process and log an error message to the console along with the error details. This helps in diagnosing issues related to database connectivity, such as incorrect connection strings, network issues, or authentication problems, allowing developers to quickly identify and resolve connection issues.
+    }
+}
