@@ -1,6 +1,6 @@
 import React from 'react'
 import {useState} from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
 import { EyeOff, Eye, User, Mail, Lock, MessageSquare, Loader2 } from 'lucide-react'
 import AuthImagePattern from '../components/AuthImagePattern'
@@ -14,6 +14,7 @@ const SignUpPage = () => {
         email: '',
         password: '',
     });
+    const navigate = useNavigate();
 
     const {signup, isSigningUp} = useAuthStore();
 
@@ -41,11 +42,15 @@ const SignUpPage = () => {
         return true;
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();                 
 
         const success = validateForm();
-        if (success===true) signup(formData)
+        if (success !== true) return;
+        const result = await signup(formData);
+        if (result === true) {
+            navigate('/login');
+        }
     }
   return (
     <div className='min h-screen grid lg:grid-cols-2'>

@@ -1,40 +1,84 @@
-import {create} from 'zustand';
-import { axiosInstance } from '../lib/axios';
+import {create} from 'zustand'; // to create a Zustand store for managing authentication state and actions in the React application. The store will hold the current authenticated user, loading states for various authentication-related actions, and functions to check authentication status, sign up, and log out users. This allows for centralized management of authentication logic and state across the application, making it easier to access and update authentication information from any component that needs it.
+import { axiosInstance } from '../lib/axios'; // to import a pre-configured Axios instance for making HTTP requests to the backend API. This instance may include default settings such as the base URL, headers, and interceptors for handling authentication tokens or errors. By using this instance in the authentication store, we can easily make API calls related to authentication (like checking auth status, signing up, and logging out) without having to set up the Axios configuration in each function, ensuring consistency and reducing code duplication.
+import toast from 'react-hot-toast'; // to import the toast function from the react-hot-toast library, which is used for displaying notifications to the user. In the authentication store, we can use this function to show success messages (e.g., "Account created successfully!" or "Logged out successfully!") and error messages (e.g., "Signup failed" or "Logout failed") based on the outcomes of authentication-related actions. This enhances the user experience by providing immediate feedback on their actions, such as when they attempt to sign up or log out.
 
-export const useAuthStore = create((set) => ({
-  authUser: null,
+export const useAuthStore = create((set) => ({ // to define the authentication store using Zustand's create function. The store will manage the authentication state and actions for the application.
+  authUser: null, // to hold the currently authenticated user's information. Initially set to null, it will be updated with the user's data upon successful authentication (e.g., after checking auth status or logging in). This allows components across the application to access the authenticated user's information and determine if a user is logged in or not.
 
-  isSigningUp:false,
-  isLoggingIn:false,
-  isUpdatingProfile:false,
+  isSigningUp:false, // to indicate whether a sign-up process is currently in progress. This boolean state can be used to show loading indicators or disable form inputs while the sign-up request is being processed, improving the user experience by providing feedback on the ongoing action.
+  isLoggingIn:false, // to indicate whether a login process is currently in progress. Similar to isSigningUp, this state can be used to manage UI feedback during the login process, such as showing a loading spinner or disabling the login button to prevent multiple submissions.
+  isUpdatingProfile:false, // to indicate whether a profile update process is currently in progress. This state can be used to manage UI feedback during profile updates, such as showing a loading indicator or disabling form inputs while the update request is being processed, enhancing the user experience by providing feedback on the ongoing action.
 
-  isCheckingAuth: true,
+  isCheckingAuth: true, // to indicate whether the application is currently checking the user's authentication status. This state can be used to show a loading indicator while the app verifies if the user is authenticated (e.g., by making an API call to check the auth status). Once the check is complete, this state will be set to false, allowing the app to render the appropriate content based on whether the user is authenticated or not.
 
-  checkAuth: async() => {
+  checkAuth: async() => { // to define an asynchronous function that checks the user's authentication status by making an API call to the backend. This function will update the authUser state with the user's information if authenticated, or set it to null if not authenticated. It also manages the isCheckingAuth state to indicate when the authentication check is in progress and when it is complete, allowing the application to render content accordingly.
     try{
-        const res =await axiosInstance.get("/auth/check")
-        set({ authUser: res.data})
+        const res =await axiosInstance.get("/auth/check") // to make a GET request to the "/auth/check" endpoint of the backend API using the pre-configured Axios instance. This endpoint is expected to return the authenticated user's information if the user is logged in, or an error if the user is not authenticated. The response from this API call will be used to update the authUser state in the store, allowing the application to know whether a user is currently authenticated and who that user is.
+        set({ authUser: res.data}) // to update the authUser state in the store with the data received from the API response. If the API call is successful and returns the authenticated user's information, this line will set authUser to that data, allowing components across the application to access the authenticated user's details. If the API call fails (e.g., if the user is not authenticated), the catch block will handle the error and set authUser to null, indicating that no user is currently authenticated.
     }
     catch(error){
-        console.log("Error in checkAuth", error)
-        set({authUser: null})
+        console.log("Error in checkAuth", error) // to log any errors that occur during the authentication check process to the console. This can help with debugging issues related to authentication, such as network errors or problems with the backend API. By logging the error, developers can gain insights into what went wrong and take appropriate actions to fix the issue.
+        set({authUser: null}) // to set the authUser state to null in case of an error during the authentication check. This indicates that no user is currently authenticated, which can be used by the application to render appropriate content (e.g., redirecting to a login page or showing a message that the user is not logged in). Setting authUser to null ensures that the application does not mistakenly treat an unauthenticated user as authenticated due to an error in the API call.
     }
     finally{
-        set({isCheckingAuth : false})
+        set({isCheckingAuth : false}) // to set the isCheckingAuth state to false in the finally block, ensuring that this state is updated regardless of whether the API call was successful or resulted in an error. This allows the application to know that the authentication check process has completed, and it can then render content based on the updated authUser state (e.g., showing the home page for authenticated users or redirecting to the login page for unauthenticated users). By placing this in the finally block, we ensure that the loading state is properly managed and that the application can respond appropriately once the authentication check is done.
     }
   },
 
-  signup: async(data) => {
-    set({isSigningUp: true})
+  signup: async(data) => { // to define an asynchronous function that handles the user sign-up process. This function takes the user's sign-up data as an argument, makes an API call to the backend to create a new account, and manages the isSigningUp state to indicate when the sign-up process is in progress. It also uses toast notifications to provide feedback to the user about the success or failure of the sign-up attempt.
+    set({isSigningUp: true}) // to set the isSigningUp state to true at the beginning of the sign-up process, indicating that a sign-up request is currently being processed. This can be used in the UI to show a loading indicator or disable the sign-up form to prevent multiple submissions while the API call is in progress.
     try{
-        const res =await axiosInstance.post("/auth/signup", data)
-        set({ authUser: res.data})
-        toast.success("Account created successfully!")
+        await axiosInstance.post("/auth/signup", data) // to make a POST request to the "/auth/signup" endpoint of the backend API using the pre-configured Axios instance. This request will send the user's sign-up data (e.g., full name, email, password) to the backend to create a new account. If the API call is successful, it means the account was created successfully, and we can proceed to provide feedback to the user and navigate them to the login page.
+        toast.success("Account created successfully!") // to show a success toast notification to the user indicating that their account was created successfully. This provides immediate feedback on the outcome of their sign-up attempt, enhancing the user experience by confirming that their action was successful.
+        return true; // to return true from the signup function if the sign-up process was successful. This can be used by the component that called the signup function (e.g., the SignUpPage component) to determine whether to navigate the user to the login page or take other actions based on the success of the sign-up attempt.
     }
     catch(error){
-        toast.error(error.response.data.message)
+        toast.error(error?.response?.data?.message || "Signup failed") // to show an error toast notification to the user if the sign-up process fails. The message displayed in the toast will either be the specific error message returned from the backend API (if available) or a generic "Signup failed" message. This provides immediate feedback to the user about what went wrong during their sign-up attempt, allowing them to take corrective actions (e.g., correcting form inputs or trying again later).
+        return false; // to return false from the signup function if the sign-up process fails. This can be used by the component that called the signup function to determine how to respond to the failure (e.g., keeping the user on the sign-up page and allowing them to correct their input or try again).
     } finally{
-      set({isSigningUp: false})
+      set({isSigningUp: false}) // to set the isSigningUp state back to false in the finally block, ensuring that this state is updated regardless of whether the sign-up process was successful or resulted in an error. This allows the UI to stop showing any loading indicators or re-enable form inputs, allowing the user to interact with the sign-up form again if needed. By placing this in the finally block, we ensure that the loading state is properly managed and that the user can respond appropriately once the sign-up process is complete.
     }
-  }
-}));
+  }, 
+
+  login: async(data) => {
+    set({isLoggingIn: true}) // to set the isLoggingIn state to true at the beginning of the login process, indicating that a login request is currently being processed. This can be used in the UI to show a loading indicator or disable the login form to prevent multiple submissions while the API call is in progress.
+    try{
+      const res= await axiosInstance.post("/auth/login", data) // to make a POST request to the "/auth/login" endpoint of the backend API using the pre-configured Axios instance. This request will send the user's login credentials (e.g., email and password) to the backend to authenticate the user. If the API call is successful, it means the user has been authenticated successfully, and we can update the authUser state with the user's information and provide feedback to the user.
+      set({authUser: res.data}) // to update the authUser state in the store with the data received from the API response upon a successful login. This allows components across the application to access the authenticated user's details and render content appropriate for logged-in users. By setting authUser to the response data, we can ensure that the application recognizes the user as authenticated and can provide access to protected routes or features.
+      toast.success("Logged in successfully!") // to show a success toast notification to the user indicating that they have logged in successfully. This provides immediate feedback on the outcome of their login attempt, enhancing the user experience by confirming that their action was successful.
+    }
+    catch(error){
+      toast.error(error?.response?.data?.message || "Login failed") // to show an error toast notification to the user if the login process fails. The message displayed in the toast will either be the specific error message returned from the backend API (if available) or a generic "Login failed" message. This provides immediate feedback to the user about what went wrong during their login attempt, allowing them to take corrective actions (e.g., correcting their credentials or trying again later).
+    }
+    finally{
+      set({isLoggingIn: false}) // to set the isLoggingIn state back to false in the finally block, ensuring that this state is updated regardless of whether the login process was successful or resulted in an error. This allows the UI to stop showing any loading indicators or re-enable form inputs, allowing the user to interact with the login form again if needed. By placing this in the finally block, we ensure that the loading state is properly managed and that the user can respond appropriately once the login process is complete.
+    }
+
+  },
+
+  logout: async() => { // to define an asynchronous function that handles the user logout process. This function makes an API call to the backend to log the user out, updates the authUser state to null, and uses toast notifications to provide feedback to the user about the success or failure of the logout attempt.
+    try{
+      await axiosInstance.post("/auth/logout") // to make a POST request to the "/auth/logout" endpoint of the backend API using the pre-configured Axios instance. This request will log the user out on the server side, typically by invalidating their authentication token or session. If the API call is successful, it means the user has been logged out successfully, and we can proceed to update the client-side state and provide feedback to the user.
+      set({authUser: null}) // to set the authUser state to null after a successful logout, indicating that there is no longer an authenticated user. This allows the application to render content appropriate for unauthenticated users (e.g., redirecting to the login page or showing a message that the user is logged out).
+      toast.success("Logged out successfully!") // to show a success toast notification to the user indicating that they have been logged out successfully. This provides immediate feedback on the outcome of their logout attempt, enhancing the user experience by confirming that their action was successful.
+    }
+    catch(error){
+        toast.error(error?.response?.data?.message || "Logout failed")  // to show an error toast notification to the user if the logout process fails. The message displayed in the toast will either be the specific error message returned from the backend API (if available) or a generic "Logout failed" message. This provides immediate feedback to the user about what went wrong during their logout attempt, allowing them to take corrective actions (e.g., trying again later).
+    }
+  },
+
+  updateProfile: async(data) => {
+    set({isUpdatingProfile: true}) // to set the isUpdatingProfile state to true at the beginning of the profile update process, indicating that a profile update request is currently being processed. This can be used in the UI to show a loading indicator or disable form inputs to prevent multiple submissions while the API call is in progress.
+    try{
+      const res = await axiosInstance.put("/auth/update-profile", data) // to make a PUT request to the "/auth/update-profile" endpoint of the backend API using the pre-configured Axios instance. This request will send the user's updated profile data (e.g., full name, email) to the backend to update their profile information. If the API call is successful, it means the user's profile has been updated successfully, and we can update the authUser state with the new user information and provide feedback to the user.
+      set({authUser: res.data}) // to update the authUser state in the store with the data received from the API response upon a successful profile update. This allows components across the application to access the updated authenticated user's details and render content accordingly. By setting authUser to the response data, we can ensure that the application reflects the latest user information after a profile update.
+      toast.success("Profile updated successfully!") // to show a success toast notification to the user      indicating that their profile has been updated successfully. This provides immediate feedback on the outcome of their profile update attempt, enhancing the user experience by confirming that their action was successful.                                                 
+    }
+    catch(error){
+      toast.error(error?.response?.data?.message || "Profile update failed") // to show an error toast notification to the user if the profile update process fails. The message displayed in the toast will either be the specific error message returned from the backend API (if available) or a generic "Profile update failed" message. This provides immediate feedback to the user about what went wrong during their profile update attempt, allowing them to take corrective actions (e.g., correcting their input or trying again later).
+    }
+    finally{
+      set({isUpdatingProfile: false}) // to set the isUpdatingProfile state back to false in the finally block, ensuring that this state is updated regardless of whether the profile update process was successful or resulted in an error. This allows the UI to stop showing any loading indicators or re-enable form inputs, allowing the user to interact with the profile update form again if needed. By placing this in the finally block, we ensure that the loading state is properly managed and that the user can respond appropriately once the profile update process is complete.
+    }                                  
+}
+}))
