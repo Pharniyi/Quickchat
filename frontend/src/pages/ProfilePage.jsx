@@ -2,12 +2,21 @@ import React from 'react'
 import { Camera} from 'lucide-react'
 import { useAuthStore } from '../store/useAuthStore'
 import { User, Mail } from 'lucide-react'
+import { useState } from 'react'
 
 const ProfilePage = () => {
   const { authUser, isUpdatingProfile, updateProfile } = useAuthStore();
-
+  const [selectedImg, setSelectedImg] = useState(null);
 const handleImageUpload = async(e) => {
-
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = async() => {
+    const base64Image = reader.result;
+    setSelectedImg(base64Image);
+    await updateProfile({profilePic: base64Image})
+  }
 }
   return (
     <div className='h-screen pt-20'>
@@ -21,7 +30,7 @@ const handleImageUpload = async(e) => {
           {/* avatar upload section*/}
           <div className='flex flex-col items-center gap-4'>
             <div className='relative'>
-              <img src={authUser?.profilePic || "/avatar.png"} alt="Profile Picture" className='size-32 rounded-full object-cover border-4' />
+              <img src={selectedImg || authUser?.profilePic || "/avatar.png"} alt="Profile Picture" className='size-32 rounded-full object-cover border-4' />
               <label htmlFor="avatar-upload" className={`absolute bottom-0 right-0 bg-base-content hover:scale-105 p-2 rounded-full cursor-pointer transition-all duration-200
                 ${isUpdatingProfile ? 'animate-pulse pointer-events-none' : ''}`}>
                 <Camera className='size-5 text-base-200' />
